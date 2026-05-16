@@ -1,0 +1,23 @@
+{
+  "name": "@bloghub/api",
+  "version": "1.0.0",
+  "description": "Shared API utilities and server logic",
+  "type": "module",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./auth": "./src/auth/index.ts"
+  },
+  "dependencies": {
+    "@bloghub/types": "workspace:*",
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^9.0.3",
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "@types/jsonwebtoken": "^9.0.7",
+    "@types/bcryptjs": "^2.4.6",
+    "typescript": "^5.3.0"
+  }
+}

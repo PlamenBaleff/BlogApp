@@ -1,0 +1,30 @@
+{
+  "name": "bloghub",
+  "version": "0.1.0",
+  "description": "Full-stack blog application with Next.js, React, Expo, Drizzle ORM, and Neon PostgreSQL",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "turbo run dev --parallel",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "format": "prettier --write \"**/*.{ts,tsx,json,md}\"",
+    "db:generate": "pnpm --filter @bloghub/db generate",
+    "db:migrate": "pnpm --filter @bloghub/db migrate",
+    "db:push": "pnpm --filter @bloghub/db push",
+    "db:studio": "pnpm --filter @bloghub/db studio",
+    "db:seed": "pnpm --filter @bloghub/db seed"
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^7.0.0",
+    "@typescript-eslint/parser": "^7.0.0",
+    "eslint": "^8.50.0",
+    "prettier": "^3.0.0",
+    "turbo": "^2.0.0",
+    "typescript": "^5.3.0"
+  },
+  "packageManager": "pnpm@9.0.0",
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}
