@@ -41,7 +41,12 @@ export const postSchema = z.object({
 
 export const postUpdateSchema = postSchema.partial();
 
+export const commentSchema = z.object({
+  content: z.string().min(1, 'Comment cannot be empty').max(2000),
+});
+
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
 export type PostInput = z.infer<typeof postSchema>;
 export type PostUpdateInput = z.infer<typeof postUpdateSchema>;
+export type CommentInput = z.infer<typeof commentSchema>;

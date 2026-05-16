@@ -35,6 +35,7 @@ export default function RegisterPage() {
       localStorage.setItem('refreshToken', data.refreshToken);
       localStorage.setItem('user', JSON.stringify(data.user));
       document.cookie = `accessToken=${data.accessToken}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
+      window.dispatchEvent(new Event('auth-change'));
 
       router.push('/admin/posts/new');
     } catch (err) {

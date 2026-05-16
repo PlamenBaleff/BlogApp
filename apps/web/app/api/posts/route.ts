@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db, posts, users } from '@bloghub/db';
-import { postSchema, requireAuth } from '@bloghub/api';
-import { desc, eq, sql } from 'drizzle-orm';
+import { postSchema, requireAuth, getAuthPayload } from '@bloghub/api';
+import { and, desc, eq, or, sql } from 'drizzle-orm';
 
 export const runtime = 'nodejs';
 
@@ -14,14 +14,37 @@ export async function GET(request: NextRequest) {
       Math.max(1, parseInt(searchParams.get('limit') || '10', 10))
     );
     const onlyPublished = searchParams.get('published') !== 'false';
+    const mineParam = searchParams.get('mine') === 'true';
 
-    const offset = (page - 1) * limit;
-    const whereClause = onlyPublished ? eq(posts.published, true) : undefined;
+    const auth = getAuthPayload(request);
+
+    // Visibility rules:
+    // - Anonymous users only see published posts.
+    // - Authenticated users see published posts AND their own drafts.
+    // - `?mine=true` (auth required) returns only the caller's posts (drafts included).
+    // - `?published=false` is honored only for the caller's own posts.
+    let whereClause;
+    if (mineParam) {
+      if (!auth) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      }
+      whereClause = eq(posts.authorId, auth.sub);
+    } else if (!auth) {
+      whereClause = eq(posts.published, true);
+    } else if (onlyPublished) {
+      whereClause = or(
+        eq(posts.published, true),
+        eq(posts.authorId, auth.sub)
+      );
+    } else {
+      // authenticated + published=false → must scope to own posts
+      whereClause = eq(posts.authorId, auth.sub);
+    }
 
     const [countRow] = await db
       .select({ count: sql<number>`count(*)::int` })
       .from(posts)
-      .where(whereClause ?? sql`true`);
+      .where(whereClause);
 
     const rows = await db
       .select({
@@ -35,10 +58,10 @@ export async function GET(request: NextRequest) {
       })
       .from(posts)
       .leftJoin(users, eq(posts.authorId, users.id))
-      .where(whereClause ?? sql`true`)
+      .where(whereClause)
       .orderBy(desc(posts.publishedAt), desc(posts.createdAt))
       .limit(limit)
-      .offset(offset);
+      .offset((page - 1) * limit);
 
     const data = rows.map((r: (typeof rows)[number]) => ({ ...r.post, author: r.author }));
     const total = countRow?.count ?? 0;

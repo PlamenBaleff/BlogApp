@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { slugify } from '../../../lib/slugify';
 
 export default function CreatePostPage() {
   const router = useRouter();
@@ -55,7 +56,7 @@ export default function CreatePostPage() {
         },
         body: JSON.stringify({
           title: formData.title,
-          slug: formData.slug,
+          slug: slugify(formData.slug) || slugify(formData.title),
           contentHtml,
           excerpt: formData.excerpt || undefined,
           tags,

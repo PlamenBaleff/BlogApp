@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db, posts, comments, users } from '@bloghub/db';
-import { postUpdateSchema, requireAuth } from '@bloghub/api';
+import { postUpdateSchema, requireAuth, getAuthPayload } from '@bloghub/api';
 import { eq, or } from 'drizzle-orm';
 
 export const runtime = 'nodejs';
 
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
@@ -23,6 +23,14 @@ export async function GET(
 
     if (!post) {
       return NextResponse.json({ error: 'Post not found' }, { status: 404 });
+    }
+
+    // Drafts are only visible to their author.
+    if (!post.published) {
+      const auth = getAuthPayload(request);
+      if (!auth || auth.sub !== post.authorId) {
+        return NextResponse.json({ error: 'Post not found' }, { status: 404 });
+      }
     }
 
     const postComments = await db
@@ -67,6 +75,10 @@ export async function PATCH(
     const body = await request.json();
     const validation = postUpdateSchema.safeParse(body);
     if (!validation.success) {
+      console.error('PATCH /api/posts validation failed', {
+        body,
+        details: validation.error.flatten(),
+      });
       return NextResponse.json(
         { error: 'Invalid input', details: validation.error.flatten() },
         { status: 400 }

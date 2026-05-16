@@ -35,6 +35,8 @@ export default function LoginPage() {
       localStorage.setItem('user', JSON.stringify(data.user));
       // also drop a cookie so the Next.js middleware lets us into /admin/*
       document.cookie = `accessToken=${data.accessToken}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
+      // Notify NavBar (same-tab) that auth state changed.
+      window.dispatchEvent(new Event('auth-change'));
 
       router.push('/admin/posts/new');
     } catch (err) {
