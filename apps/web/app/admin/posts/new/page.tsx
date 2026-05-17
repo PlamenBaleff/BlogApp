@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { slugify } from '../../../lib/slugify';
+import { createPostAction } from '../../../actions/posts';
 
 export default function CreatePostPage() {
   const router = useRouter();
@@ -30,7 +31,8 @@ export default function CreatePostPage() {
     setLoading(true);
 
     try {
-      const token = localStorage.getItem('accessToken');
+      const token =
+        typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
       if (!token) {
         router.push('/auth/login');
         return;
@@ -48,31 +50,23 @@ export default function CreatePostPage() {
         .map((p) => `<p>${p.replace(/\n/g, '<br />')}</p>`)
         .join('');
 
-      const response = await fetch('/api/posts', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          title: formData.title,
-          slug: slugify(formData.slug) || slugify(formData.title),
-          contentHtml,
-          excerpt: formData.excerpt || undefined,
-          tags,
-          published: true,
-        }),
+      // Web client → Next.js backend via a Server Action (no fetch).
+      const result = await createPostAction({
+        title: formData.title,
+        slug: slugify(formData.slug) || slugify(formData.title),
+        contentHtml,
+        excerpt: formData.excerpt || undefined,
+        tags,
+        published: true,
       });
 
-      if (!response.ok) {
-        const data = await response.json();
-        setError(data.error || 'Failed to create post');
+      if (!result.ok) {
+        setError(result.error || 'Failed to create post');
         return;
       }
 
-      const { data } = await response.json();
-      router.push(`/blog/${data.slug}`);
-    } catch (err) {
+      router.push(`/blog/${result.data.slug}`);
+    } catch {
       setError('An error occurred. Please try again.');
     } finally {
       setLoading(false);

@@ -8,12 +8,17 @@ import {
   TouchableOpacity,
   Alert,
   Platform,
+  useWindowDimensions,
 } from 'react-native';
 import axios from 'axios';
 import { useLocalSearchParams, Stack, useRouter, useFocusEffect } from 'expo-router';
 import { secureStorage } from '../../lib/secureStorage';
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000';
+
+// Cap the reading column on tablets so lines stay comfortably short.
+const TABLET_BREAKPOINT = 700;
+const READING_MAX_WIDTH = 720;
 
 type Post = {
   id: string;
@@ -57,6 +62,8 @@ const stripHtml = (html: string) =>
 export default function BlogDetailScreen() {
   const { slug } = useLocalSearchParams<{ slug: string }>();
   const router = useRouter();
+  const { width } = useWindowDimensions();
+  const isTablet = width >= TABLET_BREAKPOINT;
   const [post, setPost] = useState<Post | null>(null);
   const [me, setMe] = useState<Me>(null);
   const [loading, setLoading] = useState(true);
@@ -141,8 +148,14 @@ export default function BlogDetailScreen() {
   return (
     <>
       <Stack.Screen options={{ title: post.title }} />
-      <ScrollView style={styles.container} contentContainerStyle={{ padding: 20 }}>
-        <Text style={styles.title}>{post.title}</Text>
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={[
+          { padding: 20 },
+          isTablet && { maxWidth: READING_MAX_WIDTH, alignSelf: 'center', width: '100%' },
+        ]}
+      >
+        <Text style={[styles.title, isTablet && styles.titleTablet]}>{post.title}</Text>
         <Text style={styles.meta}>
           {post.author?.name ?? 'Unknown'} •{' '}
           {new Date(post.publishedAt ?? post.createdAt).toLocaleDateString()}
@@ -179,7 +192,7 @@ export default function BlogDetailScreen() {
           </View>
         )}
 
-        <Text style={styles.body}>{stripHtml(post.contentHtml)}</Text>
+        <Text style={[styles.body, isTablet && styles.bodyTablet]}>{stripHtml(post.contentHtml)}</Text>
       </ScrollView>
     </>
   );
@@ -190,6 +203,7 @@ const styles = StyleSheet.create({
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24 },
   error: { color: '#b91c1c' },
   title: { fontSize: 26, fontWeight: '800', color: '#111', marginBottom: 8 },
+  titleTablet: { fontSize: 34, marginBottom: 12 },
   meta: { fontSize: 13, color: '#888', marginBottom: 12 },
   tagRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 16 },
   tag: {
@@ -201,6 +215,7 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   body: { fontSize: 16, lineHeight: 24, color: '#222' },
+  bodyTablet: { fontSize: 18, lineHeight: 28 },
   actions: { flexDirection: 'row', gap: 12, marginBottom: 20 },
   btn: {
     paddingHorizontal: 16,

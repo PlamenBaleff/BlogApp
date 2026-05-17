@@ -3,6 +3,11 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import {
+  createCommentAction,
+  deleteCommentAction,
+} from '../../actions/comments';
+import { deletePostAction } from '../../actions/posts';
 
 type Author = { id: string; name: string; avatar?: string | null };
 
@@ -94,22 +99,24 @@ export function BlogPostView({ slug }: { slug: string }) {
     if (!newComment.trim() || !post) return;
     setPosting(true);
     try {
-      const token = localStorage.getItem('accessToken');
-      const res = await fetch(`/api/posts/${post.id}/comments`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ content: newComment.trim() }),
-      });
-      if (!res.ok) {
-        const j = await res.json().catch(() => ({}));
-        alert(j.error || 'Failed to post comment');
+      // Web client → Next.js backend via a Server Action (no fetch).
+      const result = await createCommentAction(post.id, newComment.trim());
+      if (!result.ok) {
+        alert(result.error || 'Failed to post comment');
         return;
       }
-      const j = await res.json();
-      setComments((prev) => [...prev, j.data]);
+      setComments((prev) => [
+        ...prev,
+        {
+          id: result.data.id,
+          content: result.data.content,
+          createdAt:
+            typeof result.data.createdAt === 'string'
+              ? result.data.createdAt
+              : result.data.createdAt.toISOString(),
+          author: result.data.author,
+        },
+      ]);
       setNewComment('');
     } finally {
       setPosting(false);
@@ -118,14 +125,9 @@ export function BlogPostView({ slug }: { slug: string }) {
 
   const deleteComment = async (commentId: string) => {
     if (!confirm('Delete this comment?')) return;
-    const token = localStorage.getItem('accessToken');
-    const res = await fetch(`/api/comments/${commentId}`, {
-      method: 'DELETE',
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    if (!res.ok) {
-      const j = await res.json().catch(() => ({}));
-      alert(j.error || 'Failed to delete comment');
+    const result = await deleteCommentAction(commentId);
+    if (!result.ok) {
+      alert(result.error || 'Failed to delete comment');
       return;
     }
     setComments((prev) => prev.filter((c) => c.id !== commentId));
@@ -136,14 +138,9 @@ export function BlogPostView({ slug }: { slug: string }) {
     if (!confirm('Delete this post permanently?')) return;
     setDeleting(true);
     try {
-      const token = localStorage.getItem('accessToken');
-      const res = await fetch(`/api/posts/${post.id}`, {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!res.ok) {
-        const j = await res.json().catch(() => ({}));
-        alert(j.error || 'Failed to delete post');
+      const result = await deletePostAction(post.id);
+      if (!result.ok) {
+        alert(result.error || 'Failed to delete post');
         return;
       }
       router.push('/blog');

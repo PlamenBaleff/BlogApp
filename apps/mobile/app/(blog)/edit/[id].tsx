@@ -9,12 +9,17 @@ import {
   StyleSheet,
   Switch,
   Alert,
+  useWindowDimensions,
 } from 'react-native';
 import axios from 'axios';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { secureStorage } from '../../../lib/secureStorage';
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000';
+
+// Cap the form on tablets so inputs stay readable.
+const TABLET_BREAKPOINT = 700;
+const FORM_MAX_WIDTH = 720;
 
 type Post = {
   id: string;
@@ -47,6 +52,8 @@ const textToHtml = (text: string) =>
 export default function EditPostScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const { width } = useWindowDimensions();
+  const isTablet = width >= TABLET_BREAKPOINT;
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -134,7 +141,10 @@ export default function EditPostScreen() {
       <Stack.Screen options={{ title: 'Edit post' }} />
       <ScrollView
         style={styles.container}
-        contentContainerStyle={{ padding: 20, paddingBottom: 60 }}
+        contentContainerStyle={[
+          { padding: 20, paddingBottom: 60 },
+          isTablet && { maxWidth: FORM_MAX_WIDTH, alignSelf: 'center', width: '100%' },
+        ]}
         keyboardShouldPersistTaps="handled"
       >
         <Text style={styles.label}>Title</Text>

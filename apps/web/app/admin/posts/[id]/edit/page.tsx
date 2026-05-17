@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import { slugify } from '../../../../lib/slugify';
+import { updatePostAction } from '../../../../actions/posts';
 
 export default function EditPostPage() {
   const router = useRouter();
@@ -71,40 +72,39 @@ export default function EditPostPage() {
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!id) return;
     setSaving(true);
     setError('');
     try {
-      const token = localStorage.getItem('accessToken');
       const tags = form.tags
         .split(',')
         .map((t) => t.trim())
         .filter(Boolean);
-      const res = await fetch(`/api/posts/${id}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          title: form.title,
-          slug: slugify(form.slug),
-          excerpt: form.excerpt || undefined,
-          contentHtml: form.contentHtml,
-          tags,
-          published: form.published,
-        }),
+
+      // Web client → Next.js backend via a Server Action (no fetch).
+      const result = await updatePostAction(id, {
+        title: form.title,
+        slug: slugify(form.slug),
+        excerpt: form.excerpt || undefined,
+        contentHtml: form.contentHtml,
+        tags,
+        published: form.published,
       });
-      if (!res.ok) {
-        const j = await res.json().catch(() => ({}));
-        console.error('PATCH /api/posts failed', j);
-        const details = j.details
-          ? ` (${JSON.stringify(j.details.fieldErrors ?? j.details)})`
-          : '';
-        setError((j.error || 'Failed to save') + details);
+
+      if (!result.ok) {
+        console.error('updatePostAction failed', result);
+        const details =
+          result.details && typeof result.details === 'object'
+            ? ` (${JSON.stringify(
+                (result.details as { fieldErrors?: unknown }).fieldErrors ??
+                  result.details,
+              )})`
+            : '';
+        setError((result.error || 'Failed to save') + details);
         return;
       }
-      const { data } = await res.json();
-      router.push(`/blog/${data.slug}`);
+
+      router.push(`/blog/${result.data.slug}`);
     } finally {
       setSaving(false);
     }

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { deletePostAction } from '../../actions/posts';
 
 type Post = {
   id: string;
@@ -42,12 +43,10 @@ export default function MyPostsPage() {
 
   const onDelete = async (id: string) => {
     if (!confirm('Delete this post?')) return;
-    const token = localStorage.getItem('accessToken');
-    const res = await fetch(`/api/posts/${id}`, {
-      method: 'DELETE',
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    if (res.ok) setPosts((prev) => prev.filter((p) => p.id !== id));
+    // Web client → Next.js backend via a Server Action (no fetch).
+    const result = await deletePostAction(id);
+    if (result.ok) setPosts((prev) => prev.filter((p) => p.id !== id));
+    else alert(result.error);
   };
 
   return (
