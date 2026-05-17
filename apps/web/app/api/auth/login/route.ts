@@ -42,8 +42,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Generate tokens
-    const accessToken = generateAccessToken(user.id, user.email);
+    // Generate tokens. Role is embedded so server-side guards (e.g. admin
+    // routes) can authorize without an extra DB hit.
+    const accessToken = generateAccessToken(user.id, user.email, user.role as 'user' | 'admin');
     const refreshToken = generateRefreshToken(user.id);
 
     // Save refresh token
@@ -65,6 +66,7 @@ export async function POST(request: NextRequest) {
           id: user.id,
           email: user.email,
           name: user.name,
+          role: user.role,
         },
       },
     });

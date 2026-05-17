@@ -94,6 +94,70 @@ pnpm db:migrate    # Apply migrations to database
 pnpm db:seed       # (Optional) Add sample data
 ```
 
+After running the seed you will have these accounts:
+
+| Email                                  | Password       | Role  |
+| -------------------------------------- | -------------- | ----- |
+| `admin@example.com`                    | `Admin123!`    | admin |
+| `demo@example.com`                     | `demo1234`     | user  |
+| `user1@example.com` … `user50@example.com` | `Password123!` | user  |
+
+The seed also creates ~10 000 posts (≈90% published) and ~30 000 comments so you can exercise paging, indexes and the blog feed under realistic load.
+
+## 🗄️ Database schema (ERD)
+
+```mermaid
+erDiagram
+    USERS ||--o{ POSTS         : authors
+    USERS ||--o{ COMMENTS      : writes
+    USERS ||--o{ REFRESH_TOKENS : owns
+    POSTS ||--o{ COMMENTS      : has
+
+    USERS {
+        varchar id PK
+        varchar email UK
+        varchar passwordHash
+        varchar name
+        varchar role
+        text    bio
+        varchar avatar
+        timestamp createdAt
+        timestamp updatedAt
+    }
+    POSTS {
+        varchar id PK
+        varchar authorId FK
+        varchar slug UK
+        varchar title
+        text    contentHtml
+        text    excerpt
+        jsonb   tags
+        boolean published
+        timestamp publishedAt
+        timestamp createdAt
+        timestamp updatedAt
+    }
+    COMMENTS {
+        varchar id PK
+        varchar postId FK
+        varchar authorId FK
+        text    body
+        timestamp createdAt
+        timestamp updatedAt
+    }
+    REFRESH_TOKENS {
+        varchar id PK
+        varchar userId FK
+        varchar tokenHash UK
+        timestamp expiresAt
+        timestamp createdAt
+    }
+```
+
+Indexes are added on every foreign key plus the columns used by the public blog
+feed (`posts.published`, `posts.publishedAt`) so paged queries stay fast even on
+the seeded ~10 000-row dataset.
+
 ### 6. **Start Development Servers**
 
 Run all development servers in parallel:

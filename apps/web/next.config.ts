@@ -2,6 +2,10 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   transpilePackages: ["@bloghub/api", "@bloghub/db", "@bloghub/types"],
+  // Hide the floating Next.js dev tools indicator. Its drag handle can leave
+  // the page in a "grabbing" state that disables text selection and shows a
+  // round cursor over the whole viewport.
+  devIndicators: false,
   async headers() {
     return [
       {

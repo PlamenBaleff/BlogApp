@@ -46,8 +46,8 @@ export async function POST(request: NextRequest) {
       })
       .returning();
 
-    // Generate tokens
-    const accessToken = generateAccessToken(newUser.id, newUser.email);
+    // Generate tokens (new accounts are always 'user' role)
+    const accessToken = generateAccessToken(newUser.id, newUser.email, newUser.role as 'user' | 'admin');
     const refreshToken = generateRefreshToken(newUser.id);
 
     // Save refresh token
@@ -70,6 +70,7 @@ export async function POST(request: NextRequest) {
             id: newUser.id,
             email: newUser.email,
             name: newUser.name,
+            role: newUser.role,
           },
         },
       },

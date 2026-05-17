@@ -27,6 +27,7 @@ export default function BlogLayout() {
     >
       <Stack.Screen name="index" options={{ title: 'BlogHub' }} />
       <Stack.Screen name="[slug]" options={{ title: 'Post' }} />
+      <Stack.Screen name="edit/[id]" options={{ title: 'Edit post' }} />
     </Stack>
   );
 }

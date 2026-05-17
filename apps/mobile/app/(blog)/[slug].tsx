@@ -1,13 +1,17 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   View,
   Text,
   ScrollView,
   ActivityIndicator,
   StyleSheet,
+  TouchableOpacity,
+  Alert,
+  Platform,
 } from 'react-native';
 import axios from 'axios';
-import { useLocalSearchParams, Stack } from 'expo-router';
+import { useLocalSearchParams, Stack, useRouter, useFocusEffect } from 'expo-router';
+import { secureStorage } from '../../lib/secureStorage';
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000';
 
@@ -19,9 +23,27 @@ type Post = {
   excerpt: string | null;
   publishedAt: string | null;
   createdAt: string;
+  published: boolean;
+  authorId: string;
   tags: string[];
-  author?: { name: string };
+  author?: { id?: string; name: string };
 };
+
+type Me = { id: string; name: string; email: string } | null;
+
+// Cross-platform confirm dialog (Alert.alert has no buttons on web).
+function confirmAction(title: string, message: string): Promise<boolean> {
+  if (Platform.OS === 'web') {
+    if (typeof window === 'undefined') return Promise.resolve(false);
+    return Promise.resolve(window.confirm(`${title}\n\n${message}`));
+  }
+  return new Promise((resolve) => {
+    Alert.alert(title, message, [
+      { text: 'Cancel', style: 'cancel', onPress: () => resolve(false) },
+      { text: 'OK', style: 'destructive', onPress: () => resolve(true) },
+    ]);
+  });
+}
 
 // very small HTML → plain text fallback (good enough for mobile demo)
 const stripHtml = (html: string) =>
@@ -34,23 +56,71 @@ const stripHtml = (html: string) =>
 
 export default function BlogDetailScreen() {
   const { slug } = useLocalSearchParams<{ slug: string }>();
+  const router = useRouter();
   const [post, setPost] = useState<Post | null>(null);
+  const [me, setMe] = useState<Me>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
-    if (!slug) return;
     (async () => {
-      try {
-        const res = await axios.get(`${API_URL}/api/posts/${slug}`);
-        setPost(res.data.data);
-      } catch (e: any) {
-        setError(e?.response?.data?.error || 'Failed to load post');
-      } finally {
-        setLoading(false);
+      const userJson = await secureStorage.getItem('user');
+      if (userJson) {
+        try {
+          setMe(JSON.parse(userJson));
+        } catch {
+          setMe(null);
+        }
       }
     })();
+  }, []);
+
+  const fetchPost = useCallback(async () => {
+    if (!slug) return;
+    try {
+      const token = await secureStorage.getItem('accessToken');
+      const headers: Record<string, string> = {};
+      if (token) headers.Authorization = `Bearer ${token}`;
+      const res = await axios.get(`${API_URL}/api/posts/${slug}`, { headers });
+      setPost(res.data.data);
+      setError(null);
+    } catch (e: any) {
+      setError(e?.response?.data?.error || 'Failed to load post');
+    } finally {
+      setLoading(false);
+    }
   }, [slug]);
+
+  // Refetch every time the screen regains focus so edits made on the edit
+  // screen are visible immediately after navigating back.
+  useFocusEffect(
+    useCallback(() => {
+      fetchPost();
+    }, [fetchPost]),
+  );
+
+  const canEdit = !!(me && post && me.id === post.authorId);
+
+  const onDelete = async () => {
+    if (!post) return;
+    const ok = await confirmAction(
+      'Delete post',
+      'Are you sure you want to delete this post? This cannot be undone.',
+    );
+    if (!ok) return;
+    setDeleting(true);
+    try {
+      const token = await secureStorage.getItem('accessToken');
+      await axios.delete(`${API_URL}/api/posts/${post.id}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      });
+      router.replace('/(blog)');
+    } catch (e: any) {
+      Alert.alert('Delete failed', e?.response?.data?.error || 'Please try again.');
+      setDeleting(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -76,6 +146,7 @@ export default function BlogDetailScreen() {
         <Text style={styles.meta}>
           {post.author?.name ?? 'Unknown'} •{' '}
           {new Date(post.publishedAt ?? post.createdAt).toLocaleDateString()}
+          {!post.published ? '  ·  DRAFT' : ''}
         </Text>
         {post.tags?.length > 0 && (
           <View style={styles.tagRow}>
@@ -86,6 +157,28 @@ export default function BlogDetailScreen() {
             ))}
           </View>
         )}
+
+        {canEdit && (
+          <View style={styles.actions}>
+            <TouchableOpacity
+              style={[styles.btn, styles.btnPrimary]}
+              onPress={() => router.push(`/(blog)/edit/${post.id}`)}
+              disabled={deleting}
+            >
+              <Text style={styles.btnPrimaryText}>Edit</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.btn, styles.btnDanger]}
+              onPress={onDelete}
+              disabled={deleting}
+            >
+              <Text style={styles.btnDangerText}>
+                {deleting ? 'Deleting…' : 'Delete'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
         <Text style={styles.body}>{stripHtml(post.contentHtml)}</Text>
       </ScrollView>
     </>
@@ -108,4 +201,16 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   body: { fontSize: 16, lineHeight: 24, color: '#222' },
+  actions: { flexDirection: 'row', gap: 12, marginBottom: 20 },
+  btn: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 8,
+    minWidth: 96,
+    alignItems: 'center',
+  },
+  btnPrimary: { backgroundColor: '#2563eb' },
+  btnPrimaryText: { color: '#fff', fontWeight: '600' },
+  btnDanger: { backgroundColor: '#fff', borderWidth: 1, borderColor: '#dc2626' },
+  btnDangerText: { color: '#dc2626', fontWeight: '600' },
 });

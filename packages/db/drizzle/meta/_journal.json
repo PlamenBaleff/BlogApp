@@ -8,6 +8,13 @@
       "when": 1778954058379,
       "tag": "0000_quiet_captain_cross",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1779031653589,
+      "tag": "0001_aromatic_firelord",
+      "breakpoints": true
     }
   ]
 }

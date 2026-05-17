@@ -37,3 +37,21 @@ export function requireAuth(
   if (!payload) return { error: 'unauthorized' };
   return { payload };
 }
+
+export type AdminAuthResult =
+  | { payload: JWTPayload }
+  | { error: 'unauthorized' | 'forbidden' };
+
+/**
+ * Server-side admin guard. Caller must build the HTTP response from the result.
+ * - `unauthorized` → 401 (no/invalid JWT)
+ * - `forbidden` → 403 (valid JWT but role !== 'admin')
+ */
+export function requireAdmin(
+  source: Headers | Request | { headers: Headers }
+): AdminAuthResult {
+  const payload = getAuthPayload(source);
+  if (!payload) return { error: 'unauthorized' };
+  if (payload.role !== 'admin') return { error: 'forbidden' };
+  return { payload };
+}

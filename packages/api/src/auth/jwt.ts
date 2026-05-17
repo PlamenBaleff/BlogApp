@@ -1,5 +1,5 @@
 import jwt, { type SignOptions } from 'jsonwebtoken';
-import type { JWTPayload } from '@bloghub/types';
+import type { JWTPayload, UserRole } from '@bloghub/types';
 
 const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_EXPIRES_IN = (process.env.JWT_EXPIRES_IN || '24h') as SignOptions['expiresIn'];
@@ -12,8 +12,14 @@ if (!JWT_SECRET) {
 
 const SECRET: jwt.Secret = JWT_SECRET;
 
-export function generateAccessToken(userId: string, email: string): string {
-  return jwt.sign({ sub: userId, email }, SECRET, { expiresIn: JWT_EXPIRES_IN });
+export function generateAccessToken(
+  userId: string,
+  email: string,
+  role: UserRole = 'user'
+): string {
+  return jwt.sign({ sub: userId, email, role }, SECRET, {
+    expiresIn: JWT_EXPIRES_IN,
+  });
 }
 
 export function generateRefreshToken(userId: string): string {

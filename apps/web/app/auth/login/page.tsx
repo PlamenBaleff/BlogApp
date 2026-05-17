@@ -3,6 +3,11 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { AuthCard } from '../../../components/AuthCard';
+import { Input } from '../../../components/Input';
+import { Button } from '../../../components/Button';
+import { Alert } from '../../../components/Alert';
+import { saveSession } from '../../lib/session';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -15,31 +20,21 @@ export default function LoginPage() {
     e.preventDefault();
     setError('');
     setLoading(true);
-
     try {
       const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
       });
-
       if (!response.ok) {
         const data = await response.json();
         setError(data.error || 'Login failed');
         return;
       }
-
       const { data } = await response.json();
-      localStorage.setItem('accessToken', data.accessToken);
-      localStorage.setItem('refreshToken', data.refreshToken);
-      localStorage.setItem('user', JSON.stringify(data.user));
-      // also drop a cookie so the Next.js middleware lets us into /admin/*
-      document.cookie = `accessToken=${data.accessToken}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
-      // Notify NavBar (same-tab) that auth state changed.
-      window.dispatchEvent(new Event('auth-change'));
-
-      router.push('/admin/posts/new');
-    } catch (err) {
+      saveSession(data);
+      router.push(data.user.role === 'admin' ? '/admin/users' : '/admin/posts');
+    } catch {
       setError('An error occurred. Please try again.');
     } finally {
       setLoading(false);
@@ -47,61 +42,42 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
-      <div className="bg-white dark:bg-gray-800 p-8 rounded-lg shadow-lg max-w-md w-full">
-        <h1 className="text-3xl font-bold text-center mb-6 text-gray-900 dark:text-white">
-          Login
-        </h1>
-
-        {error && (
-          <div className="bg-red-50 dark:bg-red-900 text-red-700 dark:text-red-200 p-3 rounded-lg mb-4">
-            {error}
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Email
-            </label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-600"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Password
-            </label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-600"
-              required
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-semibold py-2 px-4 rounded-lg transition"
-          >
-            {loading ? 'Logging in...' : 'Login'}
-          </button>
-        </form>
-
-        <p className="text-center mt-6 text-gray-600 dark:text-gray-400">
-          Don't have an account?{' '}
+    <AuthCard
+      title="Login"
+      subtitle="Welcome back to BlogHub."
+      footer={
+        <>
+          Don&apos;t have an account?{' '}
           <Link href="/auth/register" className="text-blue-600 hover:text-blue-700 font-semibold">
             Register
           </Link>
-        </p>
-      </div>
-    </div>
+        </>
+      }
+    >
+      {error && <Alert variant="error">{error}</Alert>}
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <Input
+          label="Email"
+          type="email"
+          name="email"
+          autoComplete="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+        />
+        <Input
+          label="Password"
+          type="password"
+          name="password"
+          autoComplete="current-password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+        />
+        <Button type="submit" disabled={loading} className="w-full">
+          {loading ? 'Logging in…' : 'Login'}
+        </Button>
+      </form>
+    </AuthCard>
   );
 }
