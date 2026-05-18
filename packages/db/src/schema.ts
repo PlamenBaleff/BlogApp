@@ -38,6 +38,10 @@ export const posts = pgTable(
     slug: varchar('slug', { length: 255 }).unique().notNull(),
     contentHtml: text('content_html').notNull(),
     excerpt: text('excerpt'),
+    // Optional cover image, stored as the public URL returned by the
+    // object-storage upload endpoint (Cloudflare R2). NULL when the post has
+    // no cover image.
+    coverImageUrl: text('cover_image_url'),
     authorId: varchar('author_id', { length: 128 })
       .notNull()
       .references(() => users.id, { onDelete: 'cascade' }),
