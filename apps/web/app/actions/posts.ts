@@ -28,6 +28,7 @@ import {
   type PostInput,
   type PostUpdateInput,
 } from '@bloghub/api';
+import { deleteFromR2ByUrl } from '../lib/r2';
 
 export type ActionResult<T = unknown> =
   | { ok: true; data: T }
@@ -56,7 +57,8 @@ export async function createPostAction(
     };
   }
 
-  const { title, slug, contentHtml, excerpt, tags, published } = parsed.data;
+  const { title, slug, contentHtml, excerpt, coverImageUrl, tags, published } =
+    parsed.data;
 
   let created;
   try {
@@ -67,6 +69,7 @@ export async function createPostAction(
         slug,
         contentHtml,
         excerpt: excerpt ?? null,
+        coverImageUrl: coverImageUrl ?? null,
         authorId: userId,
         tags: tags ?? [],
         published: published ?? false,
@@ -112,6 +115,13 @@ export async function updatePostAction(
   const data = parsed.data;
   const willPublishNow = data.published === true && !post.published;
 
+  // If the cover image is being replaced or cleared, schedule the old
+  // object for deletion from R2 once the DB update succeeds.
+  const coverChanged =
+    Object.prototype.hasOwnProperty.call(data, 'coverImageUrl') &&
+    data.coverImageUrl !== post.coverImageUrl;
+  const previousCover = post.coverImageUrl;
+
   let updated;
   try {
     [updated] = await db
@@ -129,6 +139,11 @@ export async function updatePostAction(
       return { ok: false, error: 'A post with this slug already exists' };
     }
     throw err;
+  }
+
+  if (coverChanged && previousCover) {
+    // Fire-and-forget; failures are logged inside deleteFromR2ByUrl.
+    void deleteFromR2ByUrl(previousCover);
   }
 
   revalidatePath('/blog');
@@ -152,6 +167,11 @@ export async function deletePostAction(
   if (post.authorId !== userId) return { ok: false, error: 'Forbidden' };
 
   await db.delete(posts).where(eq(posts.id, id));
+
+  // Best-effort cleanup of the associated cover image in R2.
+  if (post.coverImageUrl) {
+    void deleteFromR2ByUrl(post.coverImageUrl);
+  }
 
   revalidatePath('/blog');
   revalidatePath('/admin/posts');

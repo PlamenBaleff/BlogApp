@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db, posts, comments, users } from '@bloghub/db';
 import { postUpdateSchema, requireAuth, getAuthPayload } from '@bloghub/api';
 import { eq, or } from 'drizzle-orm';
+import { deleteFromR2ByUrl } from '../../../lib/r2';
 
 export const runtime = 'nodejs';
 
@@ -96,6 +97,11 @@ export async function PATCH(
     const patch = validation.data;
     const willPublishNow = patch.published === true && !post.published;
 
+    const coverChanged =
+      Object.prototype.hasOwnProperty.call(patch, 'coverImageUrl') &&
+      patch.coverImageUrl !== post.coverImageUrl;
+    const previousCover = post.coverImageUrl;
+
     let updated;
     try {
       [updated] = await db
@@ -116,6 +122,10 @@ export async function PATCH(
         );
       }
       throw err;
+    }
+
+    if (coverChanged && previousCover) {
+      void deleteFromR2ByUrl(previousCover);
     }
 
     return NextResponse.json({ success: true, data: updated });
@@ -148,6 +158,10 @@ export async function DELETE(
     }
 
     await db.delete(posts).where(eq(posts.id, id));
+
+    if (post.coverImageUrl) {
+      void deleteFromR2ByUrl(post.coverImageUrl);
+    }
 
     return NextResponse.json({ success: true, message: 'Post deleted' });
   } catch (error) {

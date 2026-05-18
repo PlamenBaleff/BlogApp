@@ -102,7 +102,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { title, slug, contentHtml, excerpt, tags, published } = validation.data;
+    const { title, slug, contentHtml, excerpt, coverImageUrl, tags, published } =
+      validation.data;
 
     // Rely on the unique constraint on `slug` to handle the race window
     // between "check" and "insert". Postgres raises 23505 on conflict.
@@ -115,6 +116,7 @@ export async function POST(request: NextRequest) {
           slug,
           contentHtml,
           excerpt: excerpt ?? null,
+          coverImageUrl: coverImageUrl ?? null,
           authorId: auth.payload.sub,
           tags: tags ?? [],
           published: published ?? false,
