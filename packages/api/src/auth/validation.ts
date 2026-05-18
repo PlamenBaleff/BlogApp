@@ -35,6 +35,12 @@ export const postSchema = z.object({
     .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'Invalid slug format'),
   contentHtml: z.string().min(1, 'Content is required'),
   excerpt: z.string().max(1000).optional(),
+  coverImageUrl: z
+    .string()
+    .url('Invalid cover image URL')
+    .max(2048)
+    .nullable()
+    .optional(),
   tags: z.array(z.string()).optional(),
   published: z.boolean().optional(),
 });

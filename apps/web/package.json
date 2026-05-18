@@ -9,6 +9,7 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1048.0",
     "@bloghub/api": "workspace:*",
     "@bloghub/db": "workspace:*",
     "@bloghub/types": "workspace:*",
