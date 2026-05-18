@@ -24,6 +24,7 @@ type Post = {
   slug: string;
   contentHtml: string;
   excerpt: string | null;
+  coverImageUrl: string | null;
   tags: string[];
   publishedAt: string | null;
   createdAt: string;
@@ -235,6 +236,17 @@ export function BlogPostView({ slug }: { slug: string }) {
           </div>
         )}
       </header>
+
+      {post.coverImageUrl && (
+        <div className="mb-8 overflow-hidden rounded-lg bg-gray-100 dark:bg-gray-900">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={post.coverImageUrl}
+            alt=""
+            className="w-full max-h-[480px] object-cover"
+          />
+        </div>
+      )}
 
       <div className="prose dark:prose-invert max-w-none mb-12">
         <div

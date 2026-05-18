@@ -5,11 +5,13 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { slugify } from '../../../lib/slugify';
 import { createPostAction } from '../../../actions/posts';
+import { ImageUpload } from '../../../../components/ImageUpload';
 
 export default function CreatePostPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [coverImageUrl, setCoverImageUrl] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     title: '',
     slug: '',
@@ -56,6 +58,7 @@ export default function CreatePostPage() {
         slug: slugify(formData.slug) || slugify(formData.title),
         contentHtml,
         excerpt: formData.excerpt || undefined,
+        coverImageUrl,
         tags,
         published: true,
       });
@@ -132,6 +135,12 @@ export default function CreatePostPage() {
             placeholder="A brief summary of your post"
           />
         </div>
+
+        <ImageUpload
+          value={coverImageUrl}
+          onChange={setCoverImageUrl}
+          disabled={loading}
+        />
 
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">

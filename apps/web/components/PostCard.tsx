@@ -6,6 +6,7 @@ export interface PostCardData {
   slug: string;
   excerpt: string | null;
   contentHtml?: string;
+  coverImageUrl?: string | null;
   tags: string[];
   publishedAt: string | Date | null;
   createdAt: string | Date;
@@ -34,32 +35,45 @@ export function PostCard({ post }: { post: PostCardData }) {
 
   return (
     <Link href={`/blog/${post.slug}`} className="block group">
-      <article className="p-6 rounded-lg border border-gray-200 dark:border-gray-800 hover:border-blue-600 dark:hover:border-blue-500 transition">
-        <h2 className="text-2xl font-bold mb-2 text-gray-900 dark:text-white group-hover:text-blue-600">
-          {post.title}
-        </h2>
-        {summary && (
-          <p className="text-gray-600 dark:text-gray-400 mb-4 line-clamp-2">{summary}</p>
+      <article className="rounded-lg border border-gray-200 dark:border-gray-800 hover:border-blue-600 dark:hover:border-blue-500 transition overflow-hidden">
+        {post.coverImageUrl && (
+          <div className="aspect-[16/9] w-full overflow-hidden bg-gray-100 dark:bg-gray-900">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={post.coverImageUrl}
+              alt=""
+              className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-300"
+              loading="lazy"
+            />
+          </div>
         )}
-        <div className="flex flex-wrap gap-2 items-center text-sm text-gray-500">
-          {post.author?.name && <span>{post.author.name}</span>}
-          {post.author?.name && <span aria-hidden>·</span>}
-          <time>{formatDate(post.publishedAt ?? post.createdAt)}</time>
-          {post.tags?.length > 0 && (
-            <>
-              <span aria-hidden>·</span>
-              <span className="flex flex-wrap gap-1">
-                {post.tags.slice(0, 4).map((tag) => (
-                  <span
-                    key={tag}
-                    className="bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded text-xs text-gray-700 dark:text-gray-300"
-                  >
-                    {tag}
-                  </span>
-                ))}
-              </span>
-            </>
+        <div className="p-6">
+          <h2 className="text-2xl font-bold mb-2 text-gray-900 dark:text-white group-hover:text-blue-600">
+            {post.title}
+          </h2>
+          {summary && (
+            <p className="text-gray-600 dark:text-gray-400 mb-4 line-clamp-2">{summary}</p>
           )}
+          <div className="flex flex-wrap gap-2 items-center text-sm text-gray-500">
+            {post.author?.name && <span>{post.author.name}</span>}
+            {post.author?.name && <span aria-hidden>·</span>}
+            <time>{formatDate(post.publishedAt ?? post.createdAt)}</time>
+            {post.tags?.length > 0 && (
+              <>
+                <span aria-hidden>·</span>
+                <span className="flex flex-wrap gap-1">
+                  {post.tags.slice(0, 4).map((tag) => (
+                    <span
+                      key={tag}
+                      className="bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded text-xs text-gray-700 dark:text-gray-300"
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </span>
+              </>
+            )}
+          </div>
         </div>
       </article>
     </Link>

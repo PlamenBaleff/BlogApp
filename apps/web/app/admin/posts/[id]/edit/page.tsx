@@ -5,6 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import { slugify } from '../../../../lib/slugify';
 import { updatePostAction } from '../../../../actions/posts';
+import { ImageUpload } from '../../../../../components/ImageUpload';
 
 export default function EditPostPage() {
   const router = useRouter();
@@ -15,6 +16,7 @@ export default function EditPostPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [authorId, setAuthorId] = useState<string | null>(null);
+  const [coverImageUrl, setCoverImageUrl] = useState<string | null>(null);
   const [form, setForm] = useState({
     title: '',
     slug: '',
@@ -50,6 +52,7 @@ export default function EditPostPage() {
         return;
       }
       setAuthorId(data.authorId);
+      setCoverImageUrl(data.coverImageUrl ?? null);
       setForm({
         title: data.title,
         slug: data.slug,
@@ -87,6 +90,7 @@ export default function EditPostPage() {
         slug: slugify(form.slug),
         excerpt: form.excerpt || undefined,
         contentHtml: form.contentHtml,
+        coverImageUrl,
         tags,
         published: form.published,
       });
@@ -172,6 +176,11 @@ export default function EditPostPage() {
             className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-600"
           />
         </div>
+        <ImageUpload
+          value={coverImageUrl}
+          onChange={setCoverImageUrl}
+          disabled={saving}
+        />
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             Content (HTML)
