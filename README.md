@@ -153,7 +153,20 @@ JWT_SECRET=your-random-secret-key-at-least-32-characters-long
 JWT_EXPIRES_IN=24h
 JWT_REFRESH_EXPIRES_IN=30d
 NEXT_PUBLIC_API_URL=http://localhost:3000
+
+# Cloudflare R2 (optional — required only for post cover-image uploads)
+R2_ENDPOINT=https://<account-id>.r2.cloudflarestorage.com
+R2_ACCESS_KEY_ID=...
+R2_SECRET_ACCESS_KEY=...
+R2_BUCKET=bloghub-uploads
+R2_PUBLIC_BASE_URL=https://pub-<hash>.r2.dev
 ```
+
+> **File uploads (cover images)** — When the `R2_*` variables are set, the
+> admin "New post" / "Edit post" screens expose an image picker that uploads
+> directly to Cloudflare R2 via `POST /api/upload` and stores the public URL
+> on the post. When the variables are missing the app still works, the
+> uploader simply returns `503` and posts have no cover image.
 
 ### 4. **Install Dependencies**
 
