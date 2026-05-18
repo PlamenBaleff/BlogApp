@@ -46,13 +46,14 @@ export async function GET(request: NextRequest) {
       .from(posts)
       .where(whereClause);
 
+    // Note: author.email is intentionally omitted from the public feed so
+    // we don't leak addresses to anonymous scrapers.
     const rows = await db
       .select({
         post: posts,
         author: {
           id: users.id,
           name: users.name,
-          email: users.email,
           avatar: users.avatar,
         },
       })
@@ -103,29 +104,33 @@ export async function POST(request: NextRequest) {
 
     const { title, slug, contentHtml, excerpt, tags, published } = validation.data;
 
-    const existing = await db.query.posts.findFirst({
-      where: eq(posts.slug, slug),
-    });
-    if (existing) {
-      return NextResponse.json(
-        { error: 'A post with this slug already exists' },
-        { status: 409 }
-      );
+    // Rely on the unique constraint on `slug` to handle the race window
+    // between "check" and "insert". Postgres raises 23505 on conflict.
+    let newPost;
+    try {
+      [newPost] = await db
+        .insert(posts)
+        .values({
+          title,
+          slug,
+          contentHtml,
+          excerpt: excerpt ?? null,
+          authorId: auth.payload.sub,
+          tags: tags ?? [],
+          published: published ?? false,
+          publishedAt: published ? new Date() : null,
+        })
+        .returning();
+    } catch (err: unknown) {
+      const code = (err as { code?: string })?.code;
+      if (code === '23505') {
+        return NextResponse.json(
+          { error: 'A post with this slug already exists' },
+          { status: 409 }
+        );
+      }
+      throw err;
     }
-
-    const [newPost] = await db
-      .insert(posts)
-      .values({
-        title,
-        slug,
-        contentHtml,
-        excerpt: excerpt ?? null,
-        authorId: auth.payload.sub,
-        tags: tags ?? [],
-        published: published ?? false,
-        publishedAt: published ? new Date() : null,
-      })
-      .returning();
 
     return NextResponse.json({ success: true, data: newPost }, { status: 201 });
   } catch (error) {

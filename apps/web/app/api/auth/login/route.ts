@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { loginSchema, verifyPassword } from '@bloghub/api';
 import { db, users, refreshTokens } from '@bloghub/db';
 import { generateAccessToken, generateRefreshToken } from '@bloghub/api';
-import { eq } from 'drizzle-orm';
+import { and, eq, lt } from 'drizzle-orm';
 
 export const runtime = 'nodejs';
 
@@ -50,6 +50,17 @@ export async function POST(request: NextRequest) {
     // Save refresh token
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 30); // 30 days
+
+    // Garbage-collect this user's expired refresh tokens so the table doesn't
+    // grow without bound on repeat logins.
+    await db
+      .delete(refreshTokens)
+      .where(
+        and(
+          eq(refreshTokens.userId, user.id),
+          lt(refreshTokens.expiresAt, new Date()),
+        ),
+      );
 
     await db.insert(refreshTokens).values({
       userId: user.id,

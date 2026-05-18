@@ -16,7 +16,7 @@ export async function GET(
       where: or(eq(posts.id, id), eq(posts.slug, id)),
       with: {
         author: {
-          columns: { id: true, name: true, email: true, avatar: true },
+          columns: { id: true, name: true, avatar: true },
         },
       },
     });
@@ -89,22 +89,34 @@ export async function PATCH(
     if (!post) {
       return NextResponse.json({ error: 'Post not found' }, { status: 404 });
     }
-    if (post.authorId !== auth.payload.sub) {
+    if (post.authorId !== auth.payload.sub && auth.payload.role !== 'admin') {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
     const patch = validation.data;
     const willPublishNow = patch.published === true && !post.published;
 
-    const [updated] = await db
-      .update(posts)
-      .set({
-        ...patch,
-        publishedAt: willPublishNow ? new Date() : post.publishedAt,
-        updatedAt: new Date(),
-      })
-      .where(eq(posts.id, id))
-      .returning();
+    let updated;
+    try {
+      [updated] = await db
+        .update(posts)
+        .set({
+          ...patch,
+          publishedAt: willPublishNow ? new Date() : post.publishedAt,
+          updatedAt: new Date(),
+        })
+        .where(eq(posts.id, id))
+        .returning();
+    } catch (err: unknown) {
+      const code = (err as { code?: string })?.code;
+      if (code === '23505') {
+        return NextResponse.json(
+          { error: 'A post with this slug already exists' },
+          { status: 409 }
+        );
+      }
+      throw err;
+    }
 
     return NextResponse.json({ success: true, data: updated });
   } catch (error) {
@@ -131,7 +143,7 @@ export async function DELETE(
     if (!post) {
       return NextResponse.json({ error: 'Post not found' }, { status: 404 });
     }
-    if (post.authorId !== auth.payload.sub) {
+    if (post.authorId !== auth.payload.sub && auth.payload.role !== 'admin') {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 

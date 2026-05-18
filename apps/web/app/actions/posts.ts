@@ -58,26 +58,28 @@ export async function createPostAction(
 
   const { title, slug, contentHtml, excerpt, tags, published } = parsed.data;
 
-  const existing = await db.query.posts.findFirst({
-    where: eq(posts.slug, slug),
-  });
-  if (existing) {
-    return { ok: false, error: 'A post with this slug already exists' };
+  let created;
+  try {
+    [created] = await db
+      .insert(posts)
+      .values({
+        title,
+        slug,
+        contentHtml,
+        excerpt: excerpt ?? null,
+        authorId: userId,
+        tags: tags ?? [],
+        published: published ?? false,
+        publishedAt: published ? new Date() : null,
+      })
+      .returning({ id: posts.id, slug: posts.slug });
+  } catch (err: unknown) {
+    const code = (err as { code?: string })?.code;
+    if (code === '23505') {
+      return { ok: false, error: 'A post with this slug already exists' };
+    }
+    throw err;
   }
-
-  const [created] = await db
-    .insert(posts)
-    .values({
-      title,
-      slug,
-      contentHtml,
-      excerpt: excerpt ?? null,
-      authorId: userId,
-      tags: tags ?? [],
-      published: published ?? false,
-      publishedAt: published ? new Date() : null,
-    })
-    .returning({ id: posts.id, slug: posts.slug });
 
   // Invalidate any cached blog feeds / detail pages so the new post shows up.
   revalidatePath('/blog');
@@ -110,15 +112,24 @@ export async function updatePostAction(
   const data = parsed.data;
   const willPublishNow = data.published === true && !post.published;
 
-  const [updated] = await db
-    .update(posts)
-    .set({
-      ...data,
-      publishedAt: willPublishNow ? new Date() : post.publishedAt,
-      updatedAt: new Date(),
-    })
-    .where(eq(posts.id, id))
-    .returning({ id: posts.id, slug: posts.slug });
+  let updated;
+  try {
+    [updated] = await db
+      .update(posts)
+      .set({
+        ...data,
+        publishedAt: willPublishNow ? new Date() : post.publishedAt,
+        updatedAt: new Date(),
+      })
+      .where(eq(posts.id, id))
+      .returning({ id: posts.id, slug: posts.slug });
+  } catch (err: unknown) {
+    const code = (err as { code?: string })?.code;
+    if (code === '23505') {
+      return { ok: false, error: 'A post with this slug already exists' };
+    }
+    throw err;
+  }
 
   revalidatePath('/blog');
   revalidatePath('/admin/posts');

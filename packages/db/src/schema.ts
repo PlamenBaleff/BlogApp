@@ -56,6 +56,20 @@ export const posts = pgTable(
     publishedAtIdx: index('posts_published_at_idx').on(table.publishedAt),
     // Fallback ordering / "my drafts" sorted by creation time.
     createdAtIdx: index('posts_created_at_idx').on(table.createdAt),
+    // Composite index for the main public feed query:
+    //   WHERE published = true ORDER BY published_at DESC
+    // Lets Postgres satisfy both the filter and the ordering from a single
+    // index scan, which is critical at the 10k+ row scale tested by seed.ts.
+    publishedFeedIdx: index('posts_published_feed_idx').on(
+      table.published,
+      table.publishedAt,
+    ),
+    // Composite index for "my posts" (author drafts + published combined)
+    // ordered by createdAt.
+    authorCreatedIdx: index('posts_author_created_idx').on(
+      table.authorId,
+      table.createdAt,
+    ),
   })
 );
 

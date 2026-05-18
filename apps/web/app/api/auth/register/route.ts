@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { hashPassword, registerSchema } from '@bloghub/api';
 import { db, users, refreshTokens } from '@bloghub/db';
 import { generateAccessToken, generateRefreshToken } from '@bloghub/api';
-import { eq } from 'drizzle-orm';
+import { eq, lt } from 'drizzle-orm';
 
 export const runtime = 'nodejs';
 
@@ -53,6 +53,10 @@ export async function POST(request: NextRequest) {
     // Save refresh token
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 30); // 30 days
+
+    // Opportunistic cleanup of any globally expired tokens. Cheap because of
+    // the `refresh_tokens_expires_at_idx` index.
+    await db.delete(refreshTokens).where(lt(refreshTokens.expiresAt, new Date()));
 
     await db.insert(refreshTokens).values({
       userId: newUser.id,

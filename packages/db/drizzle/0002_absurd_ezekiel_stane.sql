@@ -1,0 +1,2 @@
+CREATE INDEX "posts_published_feed_idx" ON "posts" USING btree ("published","published_at");--> statement-breakpoint
+CREATE INDEX "posts_author_created_idx" ON "posts" USING btree ("author_id","created_at");

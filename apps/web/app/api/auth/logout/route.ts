@@ -17,33 +17,41 @@ export const runtime = 'nodejs';
  * Access tokens are stateless JWTs; the client is expected to discard them.
  */
 export async function POST(request: NextRequest) {
-  const auth = requireAuth(request);
-  if ('error' in auth) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  let token: string | undefined;
   try {
-    const body = await request.json().catch(() => ({}));
-    token = typeof body?.refreshToken === 'string' ? body.refreshToken : undefined;
-  } catch {
-    // empty body is fine — fall through to "revoke all"
-  }
+    const auth = requireAuth(request);
+    if ('error' in auth) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
-  if (token) {
-    await db
-      .delete(refreshTokens)
-      .where(
-        and(
-          eq(refreshTokens.userId, auth.payload.sub),
-          eq(refreshTokens.token, token),
-        ),
-      );
-  } else {
-    await db
-      .delete(refreshTokens)
-      .where(eq(refreshTokens.userId, auth.payload.sub));
-  }
+    let token: string | undefined;
+    try {
+      const body = await request.json().catch(() => ({}));
+      token = typeof body?.refreshToken === 'string' ? body.refreshToken : undefined;
+    } catch {
+      // empty body is fine — fall through to "revoke all"
+    }
 
-  return NextResponse.json({ success: true });
+    if (token) {
+      await db
+        .delete(refreshTokens)
+        .where(
+          and(
+            eq(refreshTokens.userId, auth.payload.sub),
+            eq(refreshTokens.token, token),
+          ),
+        );
+    } else {
+      await db
+        .delete(refreshTokens)
+        .where(eq(refreshTokens.userId, auth.payload.sub));
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('Logout error:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 },
+    );
+  }
 }
