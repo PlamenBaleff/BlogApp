@@ -3,6 +3,7 @@ import { requireAuth } from '@bloghub/api';
 import { db, users } from '@bloghub/db';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
+import { deleteFromR2ByUrl } from '../../../lib/r2';
 
 export const runtime = 'nodejs';
 
@@ -70,6 +71,18 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
+    // If the avatar is changing (replaced or cleared), fetch the previous
+    // value so we can delete the old object from R2 after the DB update
+    // succeeds. Posting the same URL is a no-op.
+    let previousAvatar: string | null = null;
+    if (parsed.data.avatar !== undefined) {
+      const current = await db.query.users.findFirst({
+        where: eq(users.id, auth.payload.sub),
+        columns: { avatar: true },
+      });
+      previousAvatar = current?.avatar ?? null;
+    }
+
     const [updated] = await db
       .update(users)
       .set({ ...parsed.data, updatedAt: new Date() })
@@ -87,6 +100,15 @@ export async function PATCH(request: NextRequest) {
 
     if (!updated) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+
+    // Best-effort cleanup of the previous R2 object. `deleteFromR2ByUrl`
+    // silently ignores URLs that aren't ours (e.g. legacy external links).
+    if (
+      previousAvatar &&
+      previousAvatar !== updated.avatar
+    ) {
+      void deleteFromR2ByUrl(previousAvatar);
     }
 
     return NextResponse.json({ success: true, data: updated });

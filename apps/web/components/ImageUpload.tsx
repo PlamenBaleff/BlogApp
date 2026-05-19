@@ -29,6 +29,19 @@ export interface ImageUploadProps {
   label?: string;
   /** Disable the controls (e.g. while the parent form is submitting). */
   disabled?: boolean;
+  /**
+   * Visual variant.
+   *   - `cover`  : wide 16:9 preview (default, used for post cover images).
+   *   - `avatar` : square circular preview, suitable for profile pictures.
+   */
+  variant?: 'cover' | 'avatar';
+  /**
+   * R2 folder to store the upload under. Must match the server-side allowlist
+   * in `/api/upload`. Defaults to `covers` for backwards compatibility.
+   */
+  folder?: 'covers' | 'avatars';
+  /** Hint text shown under the control. */
+  hint?: string;
 }
 
 const MAX_BYTES = 5 * 1024 * 1024;
@@ -39,6 +52,9 @@ export function ImageUpload({
   onChange,
   label = 'Cover image',
   disabled,
+  variant = 'cover',
+  folder = 'covers',
+  hint,
 }: ImageUploadProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
@@ -60,6 +76,7 @@ export function ImageUpload({
     try {
       const fd = new FormData();
       fd.append('file', file);
+      fd.append('folder', folder);
       const res = await fetch('/api/upload', {
         method: 'POST',
         body: fd,
@@ -91,6 +108,22 @@ export function ImageUpload({
     if (inputRef.current) inputRef.current.value = '';
   }
 
+  const isAvatar = variant === 'avatar';
+  const previewClass = isAvatar
+    ? 'relative w-32 h-32 overflow-hidden rounded-full border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900'
+    : 'relative w-full max-w-md aspect-[16/9] overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900';
+  const emptyClass = isAvatar
+    ? 'w-32 h-32 flex items-center justify-center text-center text-xs px-2 rounded-full border-2 border-dashed border-gray-300 dark:border-gray-700 hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-300 disabled:opacity-50'
+    : 'w-full max-w-md flex items-center justify-center gap-2 px-4 py-8 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-700 hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-300 disabled:opacity-50';
+  const emptyLabel = isAvatar
+    ? uploading
+      ? 'Uploading…'
+      : 'Upload photo'
+    : uploading
+      ? 'Uploading…'
+      : 'Click to upload an image (JPG, PNG, WebP, GIF — up to 5 MB)';
+  const previewAlt = isAvatar ? 'Avatar preview' : 'Cover preview';
+
   return (
     <div className="space-y-2">
       <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200">
@@ -99,12 +132,12 @@ export function ImageUpload({
 
       {value ? (
         <div className="space-y-2">
-          <div className="relative w-full max-w-md aspect-[16/9] overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
+          <div className={previewClass}>
             {/* Plain <img> so we don't have to thread next/image config */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={value}
-              alt="Cover preview"
+              alt={previewAlt}
               className="w-full h-full object-cover"
             />
           </div>
@@ -132,9 +165,9 @@ export function ImageUpload({
           type="button"
           onClick={() => inputRef.current?.click()}
           disabled={disabled || uploading}
-          className="w-full max-w-md flex items-center justify-center gap-2 px-4 py-8 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-700 hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-300 disabled:opacity-50"
+          className={emptyClass}
         >
-          {uploading ? 'Uploading…' : 'Click to upload an image (JPG, PNG, WebP, GIF — up to 5 MB)'}
+          {emptyLabel}
         </button>
       )}
 
@@ -149,6 +182,9 @@ export function ImageUpload({
         }}
       />
 
+      {hint && !error && (
+        <p className="text-xs text-gray-500 dark:text-gray-400">{hint}</p>
+      )}
       {error && (
         <p className="text-sm text-red-600 dark:text-red-400" role="alert">
           {error}

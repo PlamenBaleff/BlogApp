@@ -6,6 +6,7 @@ import { authHeader, getSession, saveSession } from '../lib/session';
 import { Input, Textarea } from '../../components/Input';
 import { Button } from '../../components/Button';
 import { Alert } from '../../components/Alert';
+import { ImageUpload } from '../../components/ImageUpload';
 
 interface Profile {
   id: string;
@@ -142,14 +143,14 @@ export default function ProfilePage() {
           onChange={(e) => setName(e.target.value)}
           required
         />
-        <Input
-          label="Avatar URL"
-          name="avatar"
-          type="url"
-          value={avatar}
-          onChange={(e) => setAvatar(e.target.value)}
-          placeholder="https://…"
-          hint="Public URL to a profile picture. Leave blank to use the default avatar."
+        <ImageUpload
+          label="Profile picture"
+          variant="avatar"
+          folder="avatars"
+          value={avatar || null}
+          onChange={(url) => setAvatar(url ?? '')}
+          disabled={saving}
+          hint="Upload a JPG, PNG, WebP or GIF (up to 5 MB). Leave empty to use the default avatar."
         />
         <Textarea
           label="Bio"

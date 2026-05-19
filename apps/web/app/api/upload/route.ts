@@ -23,6 +23,10 @@ const MIME_TO_EXT: Record<string, string> = {
   'image/gif': 'gif',
 };
 
+// Allowlist of folders the upload endpoint will write into. Prevents callers
+// from injecting arbitrary key prefixes (e.g. `../`, system paths).
+const ALLOWED_FOLDERS = new Set<string>(['covers', 'avatars']);
+
 function getAuth(request: NextRequest) {
   // Prefer the Bearer header (mobile + most client fetches).
   const fromHeader = getAuthPayload(request);
@@ -104,8 +108,14 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  const folderRaw = formData.get('folder');
+  const folder =
+    typeof folderRaw === 'string' && ALLOWED_FOLDERS.has(folderRaw)
+      ? folderRaw
+      : 'covers';
+
   const ext = MIME_TO_EXT[contentType] ?? 'bin';
-  const key = `covers/${auth.sub}/${randomUUID()}.${ext}`;
+  const key = `${folder}/${auth.sub}/${randomUUID()}.${ext}`;
 
   const arrayBuffer = await file.arrayBuffer();
 
