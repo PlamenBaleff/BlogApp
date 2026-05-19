@@ -33,7 +33,7 @@ export default function LoginPage() {
       }
       const { data } = await response.json();
       saveSession(data);
-      router.push(data.user.role === 'admin' ? '/admin/users' : '/admin/posts');
+      router.push('/blog');
     } catch {
       setError('An error occurred. Please try again.');
     } finally {

@@ -72,7 +72,6 @@ export function NavBar() {
           Admin
         </Link>
       )}
-      <span className="text-gray-500 text-sm hidden sm:inline">{me.name}</span>
       <button onClick={logout} className={linkClass}>
         Logout
       </button>
@@ -81,9 +80,16 @@ export function NavBar() {
 
   return (
     <nav className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-      <Link href="/" className="text-2xl font-bold text-blue-600">
-        BlogHub
-      </Link>
+      <div className="flex items-center space-x-3">
+        <Link href="/" className="text-2xl font-bold text-blue-600">
+          BlogHub
+        </Link>
+        {ready && me && (
+          <span className="text-gray-600 dark:text-gray-300 text-sm">
+            Hello, {me.name}
+          </span>
+        )}
+      </div>
 
       {/* Desktop nav */}
       <div className="hidden md:flex space-x-4 items-center">
