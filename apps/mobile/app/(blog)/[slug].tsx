@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import {
   View,
   Text,
+  Image,
   ScrollView,
   ActivityIndicator,
   StyleSheet,
@@ -26,6 +27,7 @@ type Post = {
   slug: string;
   contentHtml: string;
   excerpt: string | null;
+  coverImageUrl: string | null;
   publishedAt: string | null;
   createdAt: string;
   published: boolean;
@@ -58,6 +60,30 @@ const stripHtml = (html: string) =>
     .replace(/<[^>]+>/g, '')
     .replace(/&nbsp;/g, ' ')
     .trim();
+
+// Split HTML into a list of text and image segments so we can render inline
+// <img> tags using React Native's <Image> component.
+type Segment =
+  | { kind: 'text'; value: string }
+  | { kind: 'image'; src: string; alt?: string };
+
+const renderSegments = (html: string): Segment[] => {
+  const imgRe = /<img\b[^>]*?\bsrc=["']([^"']+)["'][^>]*>/gi;
+  const out: Segment[] = [];
+  let last = 0;
+  let m: RegExpExecArray | null;
+  while ((m = imgRe.exec(html)) !== null) {
+    const before = html.slice(last, m.index);
+    const beforeText = stripHtml(before);
+    if (beforeText) out.push({ kind: 'text', value: beforeText });
+    const altMatch = /\balt=["']([^"']*)["']/i.exec(m[0]);
+    out.push({ kind: 'image', src: m[1], alt: altMatch?.[1] });
+    last = m.index + m[0].length;
+  }
+  const tail = stripHtml(html.slice(last));
+  if (tail) out.push({ kind: 'text', value: tail });
+  return out;
+};
 
 export default function BlogDetailScreen() {
   const { slug } = useLocalSearchParams<{ slug: string }>();
@@ -161,6 +187,13 @@ export default function BlogDetailScreen() {
           {new Date(post.publishedAt ?? post.createdAt).toLocaleDateString()}
           {!post.published ? '  ·  DRAFT' : ''}
         </Text>
+        {post.coverImageUrl ? (
+          <Image
+            source={{ uri: post.coverImageUrl }}
+            style={styles.cover}
+            resizeMode="cover"
+          />
+        ) : null}
         {post.tags?.length > 0 && (
           <View style={styles.tagRow}>
             {post.tags.map((tag) => (
@@ -192,7 +225,24 @@ export default function BlogDetailScreen() {
           </View>
         )}
 
-        <Text style={[styles.body, isTablet && styles.bodyTablet]}>{stripHtml(post.contentHtml)}</Text>
+        {renderSegments(post.contentHtml).map((seg, idx) =>
+          seg.kind === 'text' ? (
+            <Text
+              key={`t-${idx}`}
+              style={[styles.body, isTablet && styles.bodyTablet]}
+            >
+              {seg.value}
+            </Text>
+          ) : (
+            <Image
+              key={`i-${idx}`}
+              source={{ uri: seg.src }}
+              style={styles.inlineImage}
+              resizeMode="contain"
+              accessibilityLabel={seg.alt}
+            />
+          ),
+        )}
       </ScrollView>
     </>
   );
@@ -216,6 +266,20 @@ const styles = StyleSheet.create({
   },
   body: { fontSize: 16, lineHeight: 24, color: '#222' },
   bodyTablet: { fontSize: 18, lineHeight: 28 },
+  cover: {
+    width: '100%',
+    height: 220,
+    borderRadius: 12,
+    marginBottom: 16,
+    backgroundColor: '#e2e8f0',
+  },
+  inlineImage: {
+    width: '100%',
+    height: 220,
+    borderRadius: 8,
+    marginVertical: 12,
+    backgroundColor: '#e2e8f0',
+  },
   actions: { flexDirection: 'row', gap: 12, marginBottom: 20 },
   btn: {
     paddingHorizontal: 16,

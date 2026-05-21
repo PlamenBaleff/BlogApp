@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import {
   View,
   Text,
+  Image,
   FlatList,
   TouchableOpacity,
   StyleSheet,
@@ -20,6 +21,7 @@ type Post = {
   title: string;
   slug: string;
   excerpt: string | null;
+  coverImageUrl: string | null;
   publishedAt: string | null;
   createdAt: string;
   tags: string[];
@@ -123,6 +125,13 @@ export default function BlogListScreen() {
             style={[styles.card, numColumns > 1 && styles.cardGrid]}
             onPress={() => router.push(`/(blog)/${item.slug}`)}
           >
+            {item.coverImageUrl ? (
+              <Image
+                source={{ uri: item.coverImageUrl }}
+                style={styles.cover}
+                resizeMode="cover"
+              />
+            ) : null}
             <Text style={styles.cardTitle}>{item.title}</Text>
             {item.excerpt && (
               <Text style={styles.cardExcerpt} numberOfLines={3}>
@@ -171,6 +180,14 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     shadowOffset: { width: 0, height: 2 },
     elevation: 1,
+    overflow: 'hidden',
+  },
+  cover: {
+    width: '100%',
+    height: 160,
+    borderRadius: 8,
+    marginBottom: 10,
+    backgroundColor: '#e2e8f0',
   },
   cardGrid: { flex: 1 },
   cardTitle: { fontSize: 18, fontWeight: '700', marginBottom: 6, color: '#111' },
