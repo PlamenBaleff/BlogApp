@@ -1,0 +1,26 @@
+# =============================================================================
+# Netlify configuration for the BlogHub monorepo (Next.js web app).
+# =============================================================================
+# The web app lives in apps/web. We build via Turbo from the repo root so all
+# workspace packages (@bloghub/api, @bloghub/db, @bloghub/types) are linked
+# correctly via pnpm workspaces.
+# =============================================================================
+
+[build]
+  # Turbo handles dependency ordering across the monorepo.
+  command = "pnpm turbo run build --filter=@bloghub/web"
+  # The Next.js Netlify plugin discovers .next here.
+  publish = "apps/web/.next"
+
+[build.environment]
+  # Use Node 20 (current LTS, supported by Next.js 15+).
+  NODE_VERSION = "20"
+  # Use pnpm as the package manager.
+  NPM_FLAGS = "--version"
+  # Skip Husky / git hooks during CI installs.
+  HUSKY = "0"
+
+# Official Next.js plugin – required for ISR, middleware, image optimization,
+# and route handlers to work on Netlify.
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
