@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { Suspense, useCallback, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { authHeader, getSession } from '../../lib/session';
 import { Button } from '../../../components/Button';
@@ -19,6 +19,20 @@ interface AdminUser {
 }
 
 export default function AdminUsersPage() {
+  // useSearchParams() must be inside a Suspense boundary so Next.js can
+  // bail out of static prerendering for the part that depends on the URL.
+  return (
+    <Suspense
+      fallback={
+        <p className="text-gray-600 dark:text-gray-400">Loading users…</p>
+      }
+    >
+      <AdminUsersPageInner />
+    </Suspense>
+  );
+}
+
+function AdminUsersPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const page = Math.max(1, parseInt(searchParams.get('page') ?? '1', 10) || 1);

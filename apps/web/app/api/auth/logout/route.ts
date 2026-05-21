@@ -4,6 +4,7 @@ import { db, refreshTokens } from '@bloghub/db';
 import { and, eq } from 'drizzle-orm';
 
 export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
 /**
  * POST /api/auth/logout

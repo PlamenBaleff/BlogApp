@@ -4,6 +4,7 @@ import { commentSchema, requireAuth, getAuthPayload } from '@bloghub/api';
 import { asc, eq, or } from 'drizzle-orm';
 
 export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
 // GET /api/posts/:id/comments — list comments on a post.
 // Public, but only for posts the caller is allowed to see (drafts are

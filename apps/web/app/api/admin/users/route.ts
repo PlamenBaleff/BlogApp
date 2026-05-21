@@ -4,6 +4,11 @@ import { db, users, posts, comments } from '@bloghub/db';
 import { desc, eq, sql } from 'drizzle-orm';
 
 export const runtime = 'nodejs';
+// This route depends on the request (auth header, query params) and must NOT
+// be evaluated at build time. Without this, Next.js tries to "collect page
+// data" during `next build`, which fails on Netlify because there is no real
+// request/JWT during the build phase.
+export const dynamic = 'force-dynamic';
 
 /**
  * GET /api/admin/users  (admin only)

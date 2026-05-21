@@ -4,6 +4,7 @@ import { postSchema, requireAuth, getAuthPayload } from '@bloghub/api';
 import { and, desc, eq, or, sql } from 'drizzle-orm';
 
 export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
   try {

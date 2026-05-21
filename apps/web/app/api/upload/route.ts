@@ -5,6 +5,7 @@ import { getAuthPayload } from '@bloghub/api';
 import { isR2Configured, uploadToR2 } from '../../lib/r2';
 
 export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
 // 5 MB — keep cover images reasonably small.
 const MAX_SIZE_BYTES = 5 * 1024 * 1024;

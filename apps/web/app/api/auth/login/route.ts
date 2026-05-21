@@ -5,6 +5,7 @@ import { generateAccessToken, generateRefreshToken } from '@bloghub/api';
 import { and, eq, lt } from 'drizzle-orm';
 
 export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
 export async function POST(request: NextRequest) {
   try {

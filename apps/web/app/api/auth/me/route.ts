@@ -6,6 +6,7 @@ import { z } from 'zod';
 import { deleteFromR2ByUrl } from '../../../lib/r2';
 
 export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
 const profileColumns = {
   id: true,

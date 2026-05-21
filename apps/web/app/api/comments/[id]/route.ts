@@ -4,6 +4,7 @@ import { commentSchema, requireAuth } from '@bloghub/api';
 import { eq } from 'drizzle-orm';
 
 export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
 // PATCH /api/comments/:id — only the comment's author may edit it.
 // Per AGENTS.md: "Same rule applies to their own comments" (edit + delete).

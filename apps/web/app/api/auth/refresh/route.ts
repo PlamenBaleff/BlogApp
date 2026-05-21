@@ -8,6 +8,7 @@ import { db, users, refreshTokens } from '@bloghub/db';
 import { and, eq, gt } from 'drizzle-orm';
 
 export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
 /**
  * POST /api/auth/refresh
