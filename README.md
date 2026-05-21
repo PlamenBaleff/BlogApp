@@ -275,7 +275,7 @@ This starts:
 | ------------------------------- | ----------------------------- | ------------------------------------------ |
 | Landing                         | `/`                           | Hero + latest posts preview                |
 | About                           | `/about`                      | Static page                                |
-| Blog listing                    | `/blog`                       | Server-side paging (20 / page)             |
+| Blog listing                    | `/blog`                       | Server-side paging (12 / page)             |
 | Blog detail                     | `/blog/[slug]`                | Post body + comments + add-comment form    |
 | Login                           | `/auth/login`                 | Sets HTTP-only session cookie              |
 | Register                        | `/auth/register`              | Zod-validated form                         |
