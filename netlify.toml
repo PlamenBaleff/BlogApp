@@ -7,9 +7,12 @@
 # =============================================================================
 
 [build]
+  # Force the repository root as the base directory. If the Netlify UI has a
+  # different "Base directory" value (e.g. apps/mobile), this overrides it.
+  base = "."
   # Turbo handles dependency ordering across the monorepo.
   command = "pnpm turbo run build --filter=@bloghub/web"
-  # The Next.js Netlify plugin discovers .next here.
+  # The Next.js Netlify plugin discovers .next here (relative to base).
   publish = "apps/web/.next"
 
 [build.environment]
