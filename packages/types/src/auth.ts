@@ -1,10 +1,13 @@
 export type UserRole = 'user' | 'admin';
 
+export type UserTheme = 'light' | 'dark';
+
 export interface User {
   id: string;
   email: string;
   name: string;
   role: UserRole;
+  theme: UserTheme;
   bio?: string;
   avatar?: string;
   createdAt: Date;
