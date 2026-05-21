@@ -15,6 +15,12 @@
   # The Next.js Netlify plugin discovers .next here (relative to base).
   publish = "apps/web/.next"
 
+# Override Functions directory so that stale Netlify UI settings (e.g. left
+# over from when base was apps/mobile) don't cause the plugin to generate
+# bundles in the wrong place.
+[functions]
+  directory = "netlify/functions"
+
 [build.environment]
   # Use Node 20 (current LTS, supported by Next.js 15+).
   NODE_VERSION = "20"
