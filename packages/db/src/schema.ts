@@ -21,6 +21,9 @@ export const users = pgTable(
     // Application role. 'user' (regular) or 'admin'. Enforced server-side
     // (API routes + middleware). UI checks are convenience only.
     role: varchar('role', { length: 16 }).default('user').notNull(),
+    // UI theme preference for the web app. 'light' (default) or 'dark'.
+    // The mobile app may ignore this and follow the OS theme instead.
+    theme: varchar('theme', { length: 8 }).default('light').notNull(),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
   },
