@@ -15,6 +15,7 @@ interface Profile {
   role: 'user' | 'admin';
   bio: string | null;
   avatar: string | null;
+  theme: 'light' | 'dark';
   createdAt: string;
   updatedAt: string;
 }
@@ -25,6 +26,7 @@ export default function ProfilePage() {
   const [name, setName] = useState('');
   const [bio, setBio] = useState('');
   const [avatar, setAvatar] = useState('');
+  const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -46,6 +48,7 @@ export default function ProfilePage() {
       setName(data.name);
       setBio(data.bio ?? '');
       setAvatar(data.avatar ?? '');
+      setTheme(data.theme === 'dark' ? 'dark' : 'light');
       setLoading(false);
     })();
   }, [router]);
@@ -63,6 +66,7 @@ export default function ProfilePage() {
           name,
           bio: bio || null,
           avatar: avatar || null,
+          theme,
         }),
       });
       const json = await res.json();
@@ -73,6 +77,7 @@ export default function ProfilePage() {
       setProfile(json.data);
       setSuccess('Profile updated.');
       // keep cached "user" in sync so NavBar reflects the new name/avatar
+      // and the ThemeProvider applies the new theme immediately.
       const current = getSession();
       if (current) {
         saveSession({
@@ -82,12 +87,14 @@ export default function ProfilePage() {
             ...current.user,
             name: json.data.name,
             avatar: json.data.avatar,
+            theme: json.data.theme,
           },
         });
       }
       setName(json.data.name);
       setBio(json.data.bio ?? '');
       setAvatar(json.data.avatar ?? '');
+      setTheme(json.data.theme === 'dark' ? 'dark' : 'light');
     } catch {
       setError('An error occurred.');
     } finally {
@@ -160,6 +167,44 @@ export default function ProfilePage() {
           rows={5}
           hint="A short description shown on your posts."
         />
+
+        <fieldset className="space-y-2">
+          <legend className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+            App theme
+          </legend>
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            Choose how BlogHub looks for you. Light is the default.
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <ThemeOption
+              value="light"
+              current={theme}
+              onSelect={setTheme}
+              title="Light"
+              description="Bright, paper-white background with deep slate text."
+              swatch={
+                <div className="h-10 w-full rounded-md border border-gray-200 bg-gradient-to-br from-white to-slate-100 flex items-center px-2">
+                  <span className="text-xs font-semibold text-slate-900">Aa</span>
+                  <span className="ml-auto inline-block h-3 w-3 rounded-full bg-blue-600" />
+                </div>
+              }
+            />
+            <ThemeOption
+              value="dark"
+              current={theme}
+              onSelect={setTheme}
+              title="Dark"
+              description="Deep navy-slate canvas, easy on the eyes at night."
+              swatch={
+                <div className="h-10 w-full rounded-md border border-gray-700 bg-gradient-to-br from-[#0b1220] to-[#111827] flex items-center px-2">
+                  <span className="text-xs font-semibold text-gray-100">Aa</span>
+                  <span className="ml-auto inline-block h-3 w-3 rounded-full bg-blue-400" />
+                </div>
+              }
+            />
+          </div>
+        </fieldset>
+
         <div className="flex justify-end">
           <Button type="submit" disabled={saving}>
             {saving ? 'Saving…' : 'Save changes'}
@@ -167,5 +212,66 @@ export default function ProfilePage() {
         </div>
       </form>
     </div>
+  );
+}
+
+interface ThemeOptionProps {
+  value: 'light' | 'dark';
+  current: 'light' | 'dark';
+  onSelect: (value: 'light' | 'dark') => void;
+  title: string;
+  description: string;
+  swatch: React.ReactNode;
+}
+
+function ThemeOption({
+  value,
+  current,
+  onSelect,
+  title,
+  description,
+  swatch,
+}: ThemeOptionProps) {
+  const selected = current === value;
+  return (
+    <label
+      className={[
+        'relative cursor-pointer rounded-lg border p-3 flex flex-col gap-2 transition',
+        selected
+          ? 'border-blue-600 ring-2 ring-blue-600/30 bg-blue-50 dark:bg-blue-950/40'
+          : 'border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700',
+      ].join(' ')}
+    >
+      <input
+        type="radio"
+        name="theme"
+        value={value}
+        checked={selected}
+        onChange={() => onSelect(value)}
+        className="sr-only"
+      />
+      {swatch}
+      <div className="flex items-start justify-between gap-2">
+        <div>
+          <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+            {title}
+          </p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            {description}
+          </p>
+        </div>
+        <span
+          aria-hidden
+          className={[
+            'mt-0.5 inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full border',
+            selected
+              ? 'border-blue-600 bg-blue-600'
+              : 'border-gray-300 dark:border-gray-600',
+          ].join(' ')}
+        >
+          {selected && <span className="h-1.5 w-1.5 rounded-full bg-white" />}
+        </span>
+      </div>
+    </label>
   );
 }

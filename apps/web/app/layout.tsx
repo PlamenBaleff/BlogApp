@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { NavBar } from "./NavBar";
+import { ThemeProvider } from "./ThemeProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -19,6 +20,13 @@ export const metadata: Metadata = {
   keywords: ["blog", "next.js", "react", "drizzle"],
 };
 
+/**
+ * Runs in <head> BEFORE React hydrates. Reads the user's saved theme from
+ * localStorage and sets `class="dark"` on <html> so dark-mode users don't see
+ * a flash of the light theme. Defaults to light when nothing is stored.
+ */
+const themeBootstrap = `(function(){try{var t=localStorage.getItem('theme');if(t!=='dark'){var u=localStorage.getItem('user');if(u){var p=JSON.parse(u);if(p&&p.theme==='dark')t='dark';}}if(t==='dark'){document.documentElement.classList.add('dark');}}catch(e){}})();`;
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -29,7 +37,11 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-white dark:bg-gray-950">
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeBootstrap }} />
+      </head>
+      <body className="min-h-full flex flex-col bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100">
+        <ThemeProvider />
         <header className="border-b border-gray-200 dark:border-gray-800">
           <NavBar />
         </header>

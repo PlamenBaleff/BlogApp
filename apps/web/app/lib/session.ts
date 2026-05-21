@@ -12,6 +12,7 @@ export interface SessionUser {
   name: string;
   role: 'user' | 'admin';
   avatar?: string | null;
+  theme?: 'light' | 'dark';
 }
 
 export interface Session {
@@ -63,6 +64,11 @@ export function saveSession(data: {
   localStorage.setItem(ACCESS_KEY, data.accessToken);
   localStorage.setItem(REFRESH_KEY, data.refreshToken);
   localStorage.setItem(USER_KEY, JSON.stringify(data.user));
+  // Mirror the theme into a top-level key so the inline bootstrap script
+  // in <head> can apply it before React hydrates (avoids FOUC).
+  if (data.user.theme === 'dark' || data.user.theme === 'light') {
+    localStorage.setItem('theme', data.user.theme);
+  }
   // Also drop a cookie so the middleware lets us into protected routes.
   document.cookie = `accessToken=${data.accessToken}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
   window.dispatchEvent(new Event('auth-change'));
@@ -90,6 +96,7 @@ export async function clearSession() {
   localStorage.removeItem(ACCESS_KEY);
   localStorage.removeItem(REFRESH_KEY);
   localStorage.removeItem(USER_KEY);
+  localStorage.removeItem('theme');
   document.cookie = `${ACCESS_KEY}=; Max-Age=0; path=/`;
   window.dispatchEvent(new Event('auth-change'));
 }
