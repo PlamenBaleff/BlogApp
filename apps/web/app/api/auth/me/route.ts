@@ -14,6 +14,7 @@ const profileColumns = {
   role: true,
   bio: true,
   avatar: true,
+  theme: true,
   createdAt: true,
   updatedAt: true,
 } as const;
@@ -48,6 +49,7 @@ const updateProfileSchema = z.object({
   name: z.string().min(2).max(255).optional(),
   bio: z.string().max(2000).nullable().optional(),
   avatar: z.string().url().max(2048).nullable().optional(),
+  theme: z.enum(['light', 'dark']).optional(),
 });
 
 /**
@@ -94,6 +96,7 @@ export async function PATCH(request: NextRequest) {
         role: users.role,
         bio: users.bio,
         avatar: users.avatar,
+        theme: users.theme,
         createdAt: users.createdAt,
         updatedAt: users.updatedAt,
       });
