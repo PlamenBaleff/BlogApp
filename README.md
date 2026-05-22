@@ -13,8 +13,8 @@ A modern, full-stack blog platform built with **Next.js 16**, **React 19**, **Ex
 
 | Role  | Email                | Password       |
 | ----- | -------------------- | -------------- |
-| admin | admin@example.com    | Admin123!      |
-| user  | demo@example.com     | demo1234       |
+| admin | proba@abv.bg         | 12345678       |
+| user  | proba2@abv.bg        | 12345678       |
 
 > The seed script creates 50 additional regular users (`user1@example.com` … `user50@example.com`) with the password `Password123!`, plus ~10 000 posts and ~30 000 comments so paging and indexes can be exercised under realistic load.
 
