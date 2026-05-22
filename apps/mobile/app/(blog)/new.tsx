@@ -14,6 +14,7 @@ import {
 import axios from 'axios';
 import { useRouter } from 'expo-router';
 import { secureStorage } from '../../lib/secureStorage';
+import { ImageUpload } from '../../components/ImageUpload';
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000';
 
@@ -58,6 +59,7 @@ export default function NewPostScreen() {
   const [excerpt, setExcerpt] = useState('');
   const [body, setBody] = useState('');
   const [tagsInput, setTagsInput] = useState('');
+  const [coverImageUrl, setCoverImageUrl] = useState<string | null>(null);
   const [published, setPublished] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -88,6 +90,7 @@ export default function NewPostScreen() {
           excerpt: excerpt.trim() || undefined,
           contentHtml: textToHtml(body),
           tags,
+          coverImageUrl: coverImageUrl || undefined,
           published,
         },
         { headers: { Authorization: `Bearer ${token}` } },
@@ -172,6 +175,12 @@ export default function NewPostScreen() {
         onChangeText={setTagsInput}
         placeholder="nextjs, drizzle, typescript"
         autoCapitalize="none"
+      />
+
+      <ImageUpload
+        value={coverImageUrl}
+        onChange={setCoverImageUrl}
+        disabled={saving}
       />
 
       <View style={styles.switchRow}>

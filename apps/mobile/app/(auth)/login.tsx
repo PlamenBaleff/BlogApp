@@ -8,10 +8,12 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
+  ScrollView,
   useWindowDimensions,
 } from 'react-native';
 import axios from 'axios';
 import { secureStorage } from '../../lib/secureStorage';
+import { useWebScrollIntoView } from '../../lib/useWebScrollIntoView';
 import { Link, useRouter } from 'expo-router';
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000';
@@ -29,6 +31,7 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('password123');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const onFocusInput = useWebScrollIntoView();
 
   const onSubmit = async () => {
     setError(null);
@@ -49,10 +52,17 @@ export default function LoginScreen() {
 
   return (
     <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      style={styles.flex}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 24}
     >
-      <View style={[styles.form, isTablet && { maxWidth: FORM_MAX_WIDTH, alignSelf: 'center', width: '100%' }]}>
+      <ScrollView
+        style={styles.flex}
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={[styles.form, isTablet && { maxWidth: FORM_MAX_WIDTH, alignSelf: 'center', width: '100%' }]}>
         <Text style={styles.title}>Welcome back</Text>
         <Text style={styles.subtitle}>Sign in to continue to BlogHub</Text>
 
@@ -66,6 +76,7 @@ export default function LoginScreen() {
           autoCapitalize="none"
           keyboardType="email-address"
           editable={!loading}
+          onFocus={onFocusInput}
         />
         <TextInput
           style={styles.input}
@@ -74,6 +85,7 @@ export default function LoginScreen() {
           onChangeText={setPassword}
           secureTextEntry
           editable={!loading}
+          onFocus={onFocusInput}
         />
 
         <TouchableOpacity
@@ -91,13 +103,21 @@ export default function LoginScreen() {
         <Link href="/(auth)/register" style={styles.link}>
           Don&apos;t have an account? Create one
         </Link>
-      </View>
+        </View>
+      </ScrollView>
     </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 24, justifyContent: 'center', backgroundColor: '#fff' },
+  flex: { flex: 1, backgroundColor: '#fff' },
+  scrollContent: {
+    flexGrow: 1,
+    justifyContent: 'flex-start',
+    paddingHorizontal: 24,
+    paddingTop: 48,
+    paddingBottom: 480,
+  },
   form: { width: '100%' },
   title: { fontSize: 32, fontWeight: '700', marginBottom: 4, color: '#111' },
   subtitle: { fontSize: 16, color: '#666', marginBottom: 24 },

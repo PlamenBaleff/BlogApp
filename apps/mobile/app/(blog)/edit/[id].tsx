@@ -14,6 +14,7 @@ import {
 import axios from 'axios';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { secureStorage } from '../../../lib/secureStorage';
+import { ImageUpload } from '../../../components/ImageUpload';
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000';
 
@@ -27,6 +28,7 @@ type Post = {
   slug: string;
   contentHtml: string;
   excerpt: string | null;
+  coverImageUrl: string | null;
   published: boolean;
   authorId: string;
   tags: string[];
@@ -62,6 +64,7 @@ export default function EditPostScreen() {
   const [excerpt, setExcerpt] = useState('');
   const [body, setBody] = useState('');
   const [tagsInput, setTagsInput] = useState('');
+  const [coverImageUrl, setCoverImageUrl] = useState<string | null>(null);
   const [published, setPublished] = useState(true);
 
   useEffect(() => {
@@ -77,6 +80,7 @@ export default function EditPostScreen() {
         setExcerpt(p.excerpt ?? '');
         setBody(stripHtml(p.contentHtml));
         setTagsInput((p.tags ?? []).join(', '));
+        setCoverImageUrl(p.coverImageUrl ?? null);
         setPublished(!!p.published);
       } catch (e: any) {
         setError(e?.response?.data?.error || 'Failed to load post');
@@ -106,6 +110,7 @@ export default function EditPostScreen() {
           excerpt: excerpt.trim() || undefined,
           contentHtml: textToHtml(body),
           tags,
+          coverImageUrl,
           published,
         },
         {
@@ -181,6 +186,12 @@ export default function EditPostScreen() {
           onChangeText={setTagsInput}
           placeholder="nextjs, drizzle, typescript"
           autoCapitalize="none"
+        />
+
+        <ImageUpload
+          value={coverImageUrl}
+          onChange={setCoverImageUrl}
+          disabled={saving}
         />
 
         <View style={styles.switchRow}>
