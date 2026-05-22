@@ -326,4 +326,23 @@ After setup is complete:
 
 ---
 
+## Expo Web (Netlify) Deployment
+
+- The Expo app is deployed as a static web app to Netlify: https://bloghub-mobile.netlify.app
+- The API URL is set via `EXPO_PUBLIC_API_URL` in `.env` and in the Netlify dashboard (must match the web app URL)
+- Image upload works in browser (web only) via `/api/upload` (Cloudflare R2)
+- Keyboard auto-scroll fix: input fields are always visible when typing on mobile browsers
+
+### Required .env variables (must match Netlify dashboard)
+
+```
+NEXT_PUBLIC_API_URL=https://scintillating-cascaron-fd5193.netlify.app
+EXPO_PUBLIC_API_URL=https://scintillating-cascaron-fd5193.netlify.app
+```
+
+- For local dev, set these in `.env` and `.env.local` as well.
+- For production, always update the Netlify dashboard env vars after changing URLs.
+
+---
+
 **🎉 You're all set! Start with `pnpm dev` and happy coding!**

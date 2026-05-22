@@ -6,19 +6,24 @@ A modern, full-stack blog platform built with **Next.js 16**, **React 19**, **Ex
 
 ## 🌐 Live URLs & Demo Credentials
 
-> _Will be filled in once deployment is finalised._
-
-| Target            | URL                  |
-| ----------------- | -------------------- |
-| Web (Next.js)     | `https://…`          |
-| Mobile (Expo web) | `https://…`          |
+| Target            | URL                                                      |
+| ----------------- | -------------------------------------------------------- |
+| Web (Next.js)     | https://scintillating-cascaron-fd5193.netlify.app        |
+| Mobile (Expo web) | https://bloghub-mobile.netlify.app                       |
 
 | Role  | Email                | Password       |
 | ----- | -------------------- | -------------- |
-| admin | `admin@example.com`  | `Admin123!`    |
-| user  | `demo@example.com`   | `demo1234`     |
+| admin | admin@example.com    | Admin123!      |
+| user  | demo@example.com     | demo1234       |
 
-> The seed script (see below) creates 50 additional regular users (`user1@example.com` … `user50@example.com`) with the password `Password123!`, plus ~10 000 posts and ~30 000 comments so paging and indexes can be exercised under realistic load.
+> The seed script creates 50 additional regular users (`user1@example.com` … `user50@example.com`) with the password `Password123!`, plus ~10 000 posts and ~30 000 comments so paging and indexes can be exercised under realistic load.
+
+---
+
+### Mobile (Expo web) features
+- Keyboard never covers input fields (auto-scrolls on focus)
+- Image upload (cover) works in browser (Netlify) via `/api/upload` (Cloudflare R2)
+- All environment variables are set in `.env` and Netlify dashboard
 
 ## 🏗️ Architecture
 

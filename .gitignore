@@ -30,3 +30,6 @@ build/
 
 # OS
 Thumbs.db
+
+# Local Netlify folder
+.netlify
